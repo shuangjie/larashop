@@ -57,27 +57,6 @@ class ProductsController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
      * Display the specified resource.
      *
      * @param  \App\Models\Product  $product
@@ -90,42 +69,45 @@ class ProductsController extends Controller
             throw new InvalidRequestException("商品未上架");
         }
 
+        $favored = false;
+        if ($user = $request->user()) {
+            // 从当前用户已收藏的商品中搜索 id 为当前商品 id 的商品
+            // boolval() 函数用于把值转为布尔值
+            $favored = boolval($user->favoriteProducts->find($product->id));
+        }
+
         return view('products.show', [
-            'product' => $product
+            'product' => $product,
+            'favored' => $favored
         ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Product  $product
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Product $product)
+    public function favor(Product $product, Request $request)
     {
-        //
+        $user = $request->user();
+
+        //判断用户是否已经收藏
+        if ($user->favoriteProducts()->find($product->id)) {
+            return [];
+        }
+
+        $user->favoriteProducts()->attach($product);
+
+        return [];
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Product  $product
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, Product $product)
+    public function disfavor(Product $product, Request $request)
     {
-        //
+        $user = $request->user();
+
+        //判断用户是否已经收藏
+        if ($user->favoriteProducts()->find($product->id)) {
+            //取消收藏
+            $user->favoriteProducts()->detach($product);
+            return [];
+        }
+
+        return [];
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\Product  $product
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(Product $product)
-    {
-        //
-    }
 }
